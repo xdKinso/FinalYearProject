@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from 'react';
-
-import './App.css';
+import { BrowserRouter as Router, Route, Switch, BrowserRouter, Routes } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import "./App.css";
+import Home from "./pages/Home.js";
+import About from "./pages/About.js";
+import Navbar from "./Navigation/Navbar.js";
 
 function App() {
-  const [currentTime, setCurrentTime] = useState(0);
-
-  useEffect(() => {
-    fetch('/time').then(res => res.json()).then(data => {
-      setCurrentTime(data.time);
-    });
-  }, []);
-
   return (
     <div className="App">
-      <header className="App-header">
-
-        ... no changes in this part ...
-
-        <p>The current time is {currentTime}.</p>
-      </header>
+        <Navbar/>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+          </Routes>
+        </BrowserRouter>
     </div>
   );
 }
