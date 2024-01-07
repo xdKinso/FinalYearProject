@@ -5,6 +5,10 @@ import "./App.css";
 import Home from "./pages/Home.js";
 import About from "./pages/About.js";
 import Navbar from "./Navigation/Navbar.js";
+import Login from "./pages/Login.js";
+import Register from "./pages/Register.js";
+import Profile from './pages/Profile.js';
+import Update from './pages/Update.js'
 
 function App() {
   return (
@@ -14,6 +18,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/Login" element={<Login/>} />
+            <Route path="/register" element={<Register/>} />
+            <Route path="/Profile" element = {<Profile/>}/>
+            <Route path="/Profile/Update" element = {<Update/>}/>
           </Routes>
         </BrowserRouter>
     </div>
