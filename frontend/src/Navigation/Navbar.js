@@ -4,7 +4,7 @@ import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import Button from 'react-bootstrap/Button';
-
+//my navbar i am using bootstrap to help add a little bit of style
 function BasicExample() {
   const token = sessionStorage.getItem('token'); // Using sessionStorage
 

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import api from "../components/api.js"; // Ensure this path is correct
-
+import api from "../components/api.js"; 
+//update profile page
 function UpdateProfile() {
     const [DOB, setDateOfBirth] = useState('');
     const [Bio, setBio] = useState('');
@@ -14,7 +14,7 @@ function UpdateProfile() {
         setErrorMessage('');
         setSuccessMessage('');
 
-        // Basic validation (optional)
+        // Basic validation 
         if (!DOB || !Bio) {
             setErrorMessage("Please fill in all fields.");
             return;

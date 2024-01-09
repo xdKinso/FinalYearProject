@@ -3,8 +3,9 @@ import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import api from '../components/api'; // Import your Axios instance
 import './styles.css'; 
-
+//profile page
 function Profile() {
+    //setting variables
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState('');
     const navigate = useNavigate(); // Initialize useNavigate
@@ -12,6 +13,7 @@ function Profile() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                //will fetch /profile to get data from backend
                 const response = await api.get('/profile');
                 if (response.status === 200) {
                     setUserData(response.data);
@@ -44,6 +46,7 @@ function Profile() {
     }
 
     return (
+        //will add more stuff such as their fortnite name and stats will also add css to make look better
         <div>
             <h1>Profile</h1>
             <p><strong>Username:</strong> {userData.Username}</p>

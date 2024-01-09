@@ -14,20 +14,26 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_requir
 
 
 app = Flask(__name__)
+#cors setup
 CORS(app, origins=["http://localhost:3000"])
+#adding bcrypt to encrypt passwords and decrypting
 bcrypt = Bcrypt(app)
 
+#secret key for jwt (used to hash the key based on email)
 app.config["JWT_SECRET_KEY"] = "catmeow" 
+#token expires once an hour
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+#adding jwt finally to the app
+#used for knowing if a user is logged in etc(useful for not allowing not logged in users to access certain locations)
 jwt = JWTManager(app)
 
-
+#sql setup(used xampp)
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''  # No password for default XAMPP setup
 app.config['MYSQL_DB'] = 'website'  
 
-
+#defining my sql connection creator
 def get_mysql_connection():
     try:
         connection = mysql.connector.connect(
@@ -41,13 +47,18 @@ def get_mysql_connection():
         print("Error connecting to MySQL: ", err)
         return None
 
+#route to update profile Bio and date of birth for now
+    #want to add ( usernames for games such as valorant(when i get api key(if)),fortnite, apex, csgo, ) and add to database
+#post because we are getting values and sending them back
 @app.route("/profile/update", methods=["POST"])
+#user needs to be logged in to use
 @jwt_required()
 def update():
+    #getting the identity of user
     current_user_email = get_jwt_identity()
     data = request.get_json()
     Bio = data.get("Bio")
-    DOB = data.get("DOB")  # Ensure this key matches what you're sending from the front-end
+    DOB = data.get("DOB")  
 
     conn = get_mysql_connection()
     if conn is not None:
@@ -63,7 +74,9 @@ def update():
                 # Update the user_information table
                 cursor.execute("UPDATE user_information SET Bio = %s, Age = %s WHERE User_ID = %s", 
                                (Bio, DOB, user_id))
+                #commiting the execute
                 conn.commit()
+                #closing the cursor
                 cursor.close()
                 return jsonify({"msg": "User updated"}), 200
             else:
@@ -75,23 +88,31 @@ def update():
             return jsonify({"error": "An error occurred"}), 500
 
         finally:
+            #closing connection
             conn.close()
     else:
         return jsonify({"error": "Database connection failed"}), 500
 
+#logout function 
 @app.route("/logout", methods=["POST"])
 def logout():
     response = jsonify({"msg": "logout successful"})
     unset_jwt_cookies(response)
     return response
 
+
 @app.after_request
 def refresh_expiring_jwts(response):
     try:
+        #retrieve expiration time of token
         exp_timestamp = get_jwt()["exp"]
+        #calculate current time zone in utc
         now = datetime.now(timezone.utc)
+        #set time stamp 30 minutes ahead of current time
         target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
+        #check if token close to expiring (within 30 minutes)
         if target_timestamp > exp_timestamp:
+            #create new access token
             access_token = create_access_token(identity=get_jwt_identity())
             data = response.get_json()
             if type(data) is dict:
@@ -103,24 +124,34 @@ def refresh_expiring_jwts(response):
         return response
 
 #connection = get_mysql_connection()
+#register page
 @app.route("/register", methods=["POST"])
 def register():
+    # Parse the incoming JSON data
     data = request.get_json()
+    #setting variables from json
     user = data.get("username")
     email = data.get("email")
     password = data.get("password")
+    #hashing the password
     password_hash = bcrypt.generate_password_hash(password).decode('utf-8')  # Hash the password
     
+    # Connect to the database
     conn = get_mysql_connection()
+    #if connection is avaliable
     if conn is not None:
+        #try this
         try:
+            #creating cursor
             cursor = conn.cursor()
             # Check if user or email already exists
             cursor.execute("SELECT * FROM users WHERE username = %s OR email = %s", (user, email))
             existing_user = cursor.fetchone()
 
             if existing_user:
+                #close cursor
                 cursor.close()
+                #tell the frontend that user or email is taken
                 return jsonify({"msg": "Username or email already taken"}), 409
             
             # Insert into website_users table
@@ -147,7 +178,7 @@ def register():
     else:
         return jsonify({"error": "Database connection failed"}), 500
 
-
+#login
 @app.route("/login", methods=["POST"])
 def login():
     # Parse the incoming JSON data
@@ -178,13 +209,13 @@ def login():
     else:
         return jsonify({"error": "Database connection failed"})
 
-
+#testing database (might change this to view all users profiles and their stats)
 @app.route('/dbtest')
 def db_test():
     conn = get_mysql_connection()
     if conn is not None:
         cursor = conn.cursor()
-        cursor.execute("SELECT * from users")  # Sample query to test database connection
+        cursor.execute("SELECT * from users")  # getting all users test database connection
         users = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -192,9 +223,14 @@ def db_test():
     else:
         return jsonify({"error": "Database connection failed"})
 
+#Profile route using get
+    #might add stuff like their fortnite username and their stats here soon
+    #want to add more but i dont have an api key 
 @app.route("/profile", methods=["GET"])
+#required to be a user
 @jwt_required()
 def profile():
+    #getting users identity
     current_user = get_jwt_identity()
     
     conn = get_mysql_connection()
@@ -215,11 +251,19 @@ def profile():
     else:
         return jsonify({"error": "Database connection failed"}), 500
 
+#getting users fortnite stats from fortnite api
+    #this needs a bit of changing i think logic is a little wrong 
+    #fixed temporarily to get the api to work
+    #will soon add so that it gets the data and adds to database so i can display on profile
 @app.route("/Fnstats")
 def fnstats():
+    #getting api key from .env file to make it more secure
     fn_api_key = os.getenv("FN_API_KEY")
+    #getting fornite username
     fn_username = request.args.get('username') or None
+    #optional to be logged in if username is in database will get from there other wise can take input.
     verify_jwt_in_request(optional=True)
+    #getting users identity
     current_user_email = get_jwt_identity()
 
     if current_user_email and not fn_username:
@@ -238,12 +282,12 @@ def fnstats():
 
     if not fn_username:
         return jsonify({"error": "Please provide or set a Fortnite username"}), 400
-    
+    #fortnite api request
     url = f"https://fortnite-api.com/v2/stats/br/v2?name={fn_username}"
     headers = {
         "Authorization": fn_api_key 
     }
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers)#sending the request
     
     if response.status_code == 200:
         return jsonify(response.json())
@@ -253,6 +297,8 @@ def fnstats():
             "status_code": response.status_code
         }), response.status_code
 
+#testing apex, worked before but they revoked api keys because some people messed to much around with the api key
+    #talking to developer about getting my api key to work(on another note waiting for api key from valorant (have one for league of legends but its a lot of statistics))
 @app.route("/testapex")
 def testapex():
     api_key = 'c41a910c-b062-439b-8d27-95528ff94338'
@@ -268,16 +314,21 @@ def testapex():
     else:
         # Log the response status code and response body for debugging
         print(f"Failed with status code: {response.status_code}")
-        print(f"Response content: {response.text}")  # Assuming the response is a JSON string
+        print(f"Response content: {response.text}")  
         return jsonify({
             "error": "Failed to fetch data from tracker.gg",
             "status_code": response.status_code,
             "details": response.json()  # This will show the error details from tracker.gg
         }), response.status_code
 
+# this is the chatbot based on OPENAI using their api 
+#works but currently debugging want to also send that users stats
+    # to do this i will add an sql statement that gets their stats once i send then to the database
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
+    #starting a client
     client = OpenAI()
+    #requesting data from front ent
     data = request.json
     user_message = data['message']
     print(user_message)
@@ -296,14 +347,17 @@ def chatbot():
 
     return user_message#jsonify({'response': response_text})
 
+#base route
 @app.route('/')
 def index():
     return render_template('index.html')
 
+#first ever test
 @app.route('/api')
 def api():
     return jsonify(message="Hello from Flask!")
 
+#getting time for front page
 @app.route('/time')
 def get_current_time():
     return {'time': datetime.now()}

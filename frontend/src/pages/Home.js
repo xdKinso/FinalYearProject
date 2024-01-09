@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../components/api'; // Import your custom Axios instance
 import "./App.css";
-
+//my front page
 const Home = () => {
     const [currentTime, setCurrentTime] = useState(0);
     const [userName, setUserName] = useState('');
@@ -24,11 +24,11 @@ const Home = () => {
                 }
             })
             .catch(error => {
-                // Handle error or redirect to login if unauthorized
+                // Handle error
                 console.error("There was an error fetching user data:", error);
             });
     }, []);
-
+//conditional rendering
     return (
         <div>
             <header className="App-header">

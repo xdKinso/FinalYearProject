@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import api from '../components/api'; // Import your Axios instance
-
+//setting variables
 function BasicForm() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -16,9 +16,11 @@ function BasicForm() {
     setErrorMessage('');
 
     try {
+      //getting api register it will give me a response and display message based on that response
       const response = await api.post('/register', { username, email, password });
 
       if (response.status === 200) {
+        //if a user is registered they will be prompted to login
         setSuccessMessage('User successfully registered!'); // Set success message
         setTimeout(() => {
           window.location.href = '/login'; // Redirect to home

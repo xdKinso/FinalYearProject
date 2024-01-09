@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+//using axios to communicate
 const api = axios.create({
     baseURL: 'http://localhost:5000', // Point to the Flask API
 });
@@ -28,7 +28,7 @@ api.interceptors.response.use(
                 sessionStorage.removeItem('token');
                 window.location.href = '/login';
             }
-            // Do not redirect if it's the home page
+            // Do not redirect if it's the home page (this is because home page changes based on if youre logged in)
         }
         return Promise.reject(error);
     }
