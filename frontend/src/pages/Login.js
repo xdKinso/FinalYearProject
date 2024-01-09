@@ -1,44 +1,36 @@
 import React, { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import api from '../components/api'; // Import your Axios instance
 
 function BasicForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState(''); // State for error message
-  const [successMessage, setSuccessMessage] = useState(''); // State for success message
-
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = async (event) => {
-    event.preventDefault(); // Prevents the default form submission behavior
-    setErrorMessage(""); // Clear any previous error messages
-    setSuccessMessage(""); // Clear any previous success messages
+    event.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
 
     try {
-      const response = await fetch('/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }), // Send email and password as JSON
-      });
+      const response = await api.post('/login', { email, password });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
         console.log(data); // Log success (for debugging)
-        setSuccessMessage("Login successful!"); // Set success message
+        setSuccessMessage("Login successful!");
         sessionStorage.setItem('token', data.access_token);
-        setTimeout(() =>{
-            window.location.href=('/'); // Redirect to /home
+        setTimeout(() => {
+          window.location.href = '/'; // Redirect to home
         }, 2000);
-        
       } else {
-        const errorData = await response.json();
-        setErrorMessage(errorData.msg || 'Login failed'); // Set specific error message from server
+        setErrorMessage('Login failed'); // Set a generic error message
       }
     } catch (error) {
-      console.error('An error occurred:', error); // Handle network errors
-      setErrorMessage("An error occurred. Please try again later.");
+      console.error('An error occurred:', error);
+      setErrorMessage(error.response?.data?.msg || "An error occurred. Please try again later.");
     }
   };
 

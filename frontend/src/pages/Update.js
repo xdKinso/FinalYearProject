@@ -1,15 +1,41 @@
 import React, { useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import api from "../components/api.js"; // Ensure this path is correct
 
 function UpdateProfile() {
-    const [dateOfBirth, setDateOfBirth] = useState('');
-    const [bio, setBio] = useState('');
+    const [DOB, setDateOfBirth] = useState('');
+    const [Bio, setBio] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
-        // Implement what happens when the form is submitted
-        console.log({ dateOfBirth, bio });
+        setErrorMessage('');
+        setSuccessMessage('');
+
+        // Basic validation (optional)
+        if (!DOB || !Bio) {
+            setErrorMessage("Please fill in all fields.");
+            return;
+        }
+
+        try {
+            const response = await api.post("/profile/update", { DOB, Bio });
+
+            if (response.status === 200) {
+                console.log(response.data); // Log success
+                setSuccessMessage("Profile successfully updated!");
+                setTimeout(() => {
+                    window.location.href = '/profile'; // Redirect to profile page
+                }, 2000);
+            } else {
+                setErrorMessage('Update failed');
+            }
+        } catch (error) {
+            console.error('An error occurred:', error);
+            setErrorMessage(error.response?.data?.msg || "An error occurred. Please try again later.");
+        }
     };
 
     return (
@@ -18,7 +44,7 @@ function UpdateProfile() {
                 <Form.Label>Date of Birth</Form.Label>
                 <Form.Control
                     type="date"
-                    value={dateOfBirth}
+                    value={DOB}
                     onChange={(e) => setDateOfBirth(e.target.value)}
                 />
             </Form.Group>
@@ -28,14 +54,17 @@ function UpdateProfile() {
                 <Form.Control
                     as="textarea"
                     rows={3}
-                    value={bio}
+                    value={Bio}
                     onChange={(e) => setBio(e.target.value)}
                     maxLength={250}
                 />
                 <Form.Text className="text-muted">
-                    {bio.length}/250 characters
+                    {Bio.length}/250 characters
                 </Form.Text>
             </Form.Group>
+
+            {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+            {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
             <Button variant="primary" type="submit">
                 Confirm Changes

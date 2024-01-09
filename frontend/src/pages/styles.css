@@ -4,3 +4,24 @@
     right: 10px;     /* 10px from the right */
     z-index: 1000;   /* Ensure it's above other elements */
 }
+
+/* Add this to your CSS file */
+.chat-container {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .chatbox {
+    width: 30%;
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  
+  .chat-input {
+    margin-top: 10px;
+  }
+  

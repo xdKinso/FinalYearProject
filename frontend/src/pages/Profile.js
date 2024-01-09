@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import api from '../components/api'; // Import your Axios instance
 import './styles.css'; 
 
 function Profile() {
@@ -10,24 +11,25 @@ function Profile() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const token = sessionStorage.getItem('token'); // Get token from sessionStorage
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
             try {
-                const response = await fetch('/profile', { headers });
-                if (response.ok) {
-                    const data = await response.json();
-                    setUserData(data);
+                const response = await api.get('/profile');
+                if (response.status === 200) {
+                    setUserData(response.data);
                 } else {
                     setError('Failed to fetch profile data.');
                 }
             } catch (err) {
-                setError('An error occurred.');
+                if (err.response?.status === 401) {
+                    // If unauthorized, navigate to login page
+                    navigate('/login');
+                } else {
+                    setError('An error occurred.');
+                }
             }
         };
 
         fetchData();
-    }, []);
+    }, [navigate]);
 
     const handleUpdateClick = () => {
         navigate('/profile/update'); // Navigate to /profile/update on button click
@@ -47,7 +49,7 @@ function Profile() {
             <p><strong>Username:</strong> {userData.Username}</p>
             <p><strong>Email:</strong> {userData.Email}</p>
             <p><strong>Bio:</strong> {userData.Bio}</p>
-            <p><strong>Date Of Birth: </strong>{userData.Age}</p>
+            <p><strong>Date Of Birth:</strong> {userData.Age}</p>
             <div className='top-right'>
                 <Button variant="primary" onClick={handleUpdateClick}>Update Profile</Button>
             </div>

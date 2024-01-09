@@ -1,16 +1,20 @@
 from flask import Flask, render_template, jsonify, request
 from flask_bcrypt import Bcrypt
+from flask_cors import CORS
 import mysql.connector  
 from datetime import datetime, timedelta,timezone
 import time
 import json
 import requests
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required,JWTManager,get_jwt,unset_jwt_cookies
+from dotenv import load_dotenv
+import os
+from openai import OpenAI
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required,JWTManager,get_jwt,unset_jwt_cookies,verify_jwt_in_request
 
 
 
 app = Flask(__name__)
-
+CORS(app, origins=["http://localhost:3000"])
 bcrypt = Bcrypt(app)
 
 app.config["JWT_SECRET_KEY"] = "catmeow" 
@@ -36,7 +40,44 @@ def get_mysql_connection():
     except mysql.connector.Error as err:
         print("Error connecting to MySQL: ", err)
         return None
-    
+
+@app.route("/profile/update", methods=["POST"])
+@jwt_required()
+def update():
+    current_user_email = get_jwt_identity()
+    data = request.get_json()
+    Bio = data.get("Bio")
+    DOB = data.get("DOB")  # Ensure this key matches what you're sending from the front-end
+
+    conn = get_mysql_connection()
+    if conn is not None:
+        try:
+            cursor = conn.cursor()
+
+            # Fetch the user ID based on the email from JWT token
+            cursor.execute("SELECT User_ID FROM users WHERE Email = %s", (current_user_email,))
+            user_result = cursor.fetchone()
+            if user_result:
+                user_id = user_result[0]
+
+                # Update the user_information table
+                cursor.execute("UPDATE user_information SET Bio = %s, Age = %s WHERE User_ID = %s", 
+                               (Bio, DOB, user_id))
+                conn.commit()
+                cursor.close()
+                return jsonify({"msg": "User updated"}), 200
+            else:
+                return jsonify({"error": "User not found"}), 404
+
+        except mysql.connector.Error as err:
+            print("Error occurred: ", err)
+            conn.rollback()
+            return jsonify({"error": "An error occurred"}), 500
+
+        finally:
+            conn.close()
+    else:
+        return jsonify({"error": "Database connection failed"}), 500
 
 @app.route("/logout", methods=["POST"])
 def logout():
@@ -90,6 +131,7 @@ def register():
             # Insert into website_user_information table with NULL values for Bio and Age
             cursor.execute("INSERT INTO user_information (User_ID, Bio, Age) VALUES (%s, %s, %s)", 
                            (user_id, None, None))
+            cursor.execute("INSERT INTO user_data (User_ID, fn_username) VALUES(%s, %s)",(user_id,None))
 
             conn.commit()  # Commit the transaction
             cursor.close()
@@ -150,7 +192,7 @@ def db_test():
     else:
         return jsonify({"error": "Database connection failed"})
 
-@app.route("/profile")
+@app.route("/profile", methods=["GET"])
 @jwt_required()
 def profile():
     current_user = get_jwt_identity()
@@ -173,20 +215,34 @@ def profile():
     else:
         return jsonify({"error": "Database connection failed"}), 500
 
+@app.route("/Fnstats")
+def fnstats():
+    fn_api_key = os.getenv("FN_API_KEY")
+    fn_username = request.args.get('username') or None
+    verify_jwt_in_request(optional=True)
+    current_user_email = get_jwt_identity()
 
-@app.route("/test")
-def test():
-    player_name = request.args.get('xdkry')
+    if current_user_email and not fn_username:
+        conn = get_mysql_connection()
+        if conn is not None:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT user_data.fn_username
+                    FROM user_data
+                    INNER JOIN users ON user_data.User_ID = users.User_ID
+                    WHERE users.Email = %s
+                """, (current_user_email,))
+                result = cursor.fetchone()
+                if result and result[0]:
+                    fn_username = result[0]
 
-    #if not player_name:
-       # return jsonify({"error": "Missing player name parameter"}), 400
+    if not fn_username:
+        return jsonify({"error": "Please provide or set a Fortnite username"}), 400
     
-    url = f"https://fortnite-api.com/v2/stats/br/v2?name=xdkry"
-
+    url = f"https://fortnite-api.com/v2/stats/br/v2?name={fn_username}"
     headers = {
-        "Authorization": "c71b25f4-bda9-4a42-b301-495d7d0a7459"
+        "Authorization": fn_api_key 
     }
-
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
@@ -198,15 +254,9 @@ def test():
         }), response.status_code
 
 @app.route("/testapex")
-def test2():
-    player_name = request.args.get('player_name')
-    platform = request.args.get('platform')
-    api_key = 'c41a910c-b062-439b-8d27-95528ff94338'  
-    
-    #if not player_name or not platform:
-    #    return jsonify({"error": "Missing player name or platform parameter"}), 400
-    
-    url = f"https://public-api.tracker.gg/v2/apex/standard/profile/psn/Daltoosh"
+def testapex():
+    api_key = 'c41a910c-b062-439b-8d27-95528ff94338'
+    url = f"https://public-api.tracker.gg/v2/apex/standard/profile/origin/UnityisLife"
     headers = {
         "TRN-Api-Key": api_key
     }
@@ -216,8 +266,36 @@ def test2():
     if response.status_code == 200:
         return jsonify(response.json())
     else:
-        return jsonify({"error": "Failed to fetch data from tracker.gg"}), response.status_code
-    
+        # Log the response status code and response body for debugging
+        print(f"Failed with status code: {response.status_code}")
+        print(f"Response content: {response.text}")  # Assuming the response is a JSON string
+        return jsonify({
+            "error": "Failed to fetch data from tracker.gg",
+            "status_code": response.status_code,
+            "details": response.json()  # This will show the error details from tracker.gg
+        }), response.status_code
+
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    client = OpenAI()
+    data = request.json
+    user_message = data['message']
+    print(user_message)
+    # Use the client to create a chat completion
+    #stream = client.chat.completions.create(
+     #   model="gpt-3.5-turbo",
+      #  messages=[{"role": "help players improve their fortnite gameplay using their stats", "content": user_message}],
+       # stream=True,
+    #)
+
+    # Collect the response from the stream
+    #response_text = ""
+    #for chunk in stream:
+     #   if chunk.choices[0].delta.content is not None:
+      #      response_text += chunk.choices[0].delta.content
+
+    return user_message#jsonify({'response': response_text})
+
 @app.route('/')
 def index():
     return render_template('index.html')

@@ -9,6 +9,7 @@ import Login from "./pages/Login.js";
 import Register from "./pages/Register.js";
 import Profile from './pages/Profile.js';
 import Update from './pages/Update.js'
+import FortniteStats from './pages/Fnstats.js';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/register" element={<Register/>} />
             <Route path="/Profile" element = {<Profile/>}/>
             <Route path="/Profile/Update" element = {<Update/>}/>
+            <Route path="/Fnstats" element={<FortniteStats />} />
           </Routes>
         </BrowserRouter>
     </div>

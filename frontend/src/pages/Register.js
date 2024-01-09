@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import api from '../components/api'; // Import your Axios instance
 
 function BasicForm() {
   const [username, setUsername] = useState('');
@@ -15,23 +16,19 @@ function BasicForm() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email, password }),
-      });
+      const response = await api.post('/register', { username, email, password });
 
-      const data = await response.json();
-      if (response.ok) {
+      if (response.status === 200) {
         setSuccessMessage('User successfully registered!'); // Set success message
+        setTimeout(() => {
+          window.location.href = '/login'; // Redirect to home
+        }, 2000);
       } else {
-        setErrorMessage(data.msg || 'Registration failed'); // Set error message
+        setErrorMessage('Registration failed'); // Set error message
       }
     } catch (error) {
       console.error('An error occurred:', error);
-      setErrorMessage('An error occurred. Please try again later.'); // Set error message for network errors
+      setErrorMessage(error.response?.data?.msg || 'An error occurred. Please try again later.'); // Set error message for network errors
     }
   };
 
@@ -70,10 +67,7 @@ function BasicForm() {
         />
       </Form.Group>
 
-      {/* Success Message */}
       {successMessage && <div className="alert alert-success" role="alert">{successMessage}</div>}
-
-      {/* Error Message */}
       {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
 
       <Button variant="primary" type="submit">Submit</Button>
