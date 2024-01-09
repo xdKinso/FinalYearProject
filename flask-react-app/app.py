@@ -301,7 +301,7 @@ def fnstats():
     #talking to developer about getting my api key to work(on another note waiting for api key from valorant (have one for league of legends but its a lot of statistics))
 @app.route("/testapex")
 def testapex():
-    api_key = 'c41a910c-b062-439b-8d27-95528ff94338'
+    api_key = "" #add later when key is available and working
     url = f"https://public-api.tracker.gg/v2/apex/standard/profile/origin/UnityisLife"
     headers = {
         "TRN-Api-Key": api_key
