@@ -256,6 +256,7 @@ def profile():
     #fixed temporarily to get the api to work
     #will soon add so that it gets the data and adds to database so i can display on profile
 @app.route("/Fnstats")
+@jwt_required
 def fnstats():
     #getting api key from .env file to make it more secure
     fn_api_key = os.getenv("FN_API_KEY")
@@ -333,17 +334,17 @@ def chatbot():
     user_message = data['message']
     print(user_message)
     # Use the client to create a chat completion
-    #stream = client.chat.completions.create(
-     #   model="gpt-3.5-turbo",
-      #  messages=[{"role": "help players improve their fortnite gameplay using their stats", "content": user_message}],
-       # stream=True,
-    #)
+    stream = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "help players improve their fortnite gameplay using their stats", "content": user_message}],
+        stream=True,
+    )
 
-    # Collect the response from the stream
-    #response_text = ""
-    #for chunk in stream:
-     #   if chunk.choices[0].delta.content is not None:
-      #      response_text += chunk.choices[0].delta.content
+     #Collect the response from the stream
+    response_text = ""
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            response_text += chunk.choices[0].delta.content
 
     return user_message#jsonify({'response': response_text})
 
