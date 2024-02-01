@@ -251,7 +251,7 @@ def profile():
     else:
         return jsonify({"error": "Database connection failed"}), 500
 
-#getting users fortnite stats from fortnite api
+    #getting users fortnite stats from fortnite api
     #this needs a bit of changing i think logic is a little wrong 
     #fixed temporarily to get the api to work
     #will soon add so that it gets the data and adds to database so i can display on profile
@@ -346,7 +346,54 @@ def chatbot():
         if chunk.choices[0].delta.content is not None:
             response_text += chunk.choices[0].delta.content
 
-    return user_message#jsonify({'response': response_text})
+    return jsonify({'response': response_text})#user_message
+
+@app.route('/users')
+def getUsers():
+    conn = get_mysql_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT User_ID, Username FROM users")
+    users = [{"User_ID": row[0], "Username": row[1]} for row in cursor.fetchall()]    
+    cursor.close()
+    conn.close()
+    return jsonify(users)
+
+@app.route('/users/<int:userId>')
+def get_user(userId):
+    conn = None
+    try:
+        conn = get_mysql_connection()
+        cursor = conn.cursor(dictionary=True)  # Use dictionary cursor to return data as a dictionary
+
+        query = """
+        SELECT 
+            u.Username, 
+            inf.Bio, 
+            inf.Age, 
+            ud.fn_username 
+        FROM 
+            users u 
+        LEFT JOIN 
+            user_information inf ON u.User_ID = inf.User_ID 
+        LEFT JOIN 
+            user_data ud ON u.User_ID = ud.User_ID
+        WHERE 
+            u.User_ID = %s;
+        """
+        
+        cursor.execute(query, (userId,))
+
+        user = cursor.fetchone()
+        if user:
+            print(user)
+            return jsonify(user)
+        else:
+            return jsonify({"error": "User not found"}), 404
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 #base route
 @app.route('/')
