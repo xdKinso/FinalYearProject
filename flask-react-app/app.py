@@ -256,7 +256,7 @@ def profile():
     #fixed temporarily to get the api to work
     #will soon add so that it gets the data and adds to database so i can display on profile
 @app.route("/Fnstats")
-@jwt_required
+#@jwt_required
 def fnstats():
     #getting api key from .env file to make it more secure
     fn_api_key = os.getenv("FN_API_KEY")
@@ -327,26 +327,24 @@ def testapex():
     # to do this i will add an sql statement that gets their stats once i send then to the database
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
-    #starting a client
-    client = OpenAI()
-    #requesting data from front ent
-    data = request.json
-    user_message = data['message']
-    print(user_message)
-    # Use the client to create a chat completion
-    stream = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "help players improve their fortnite gameplay using their stats", "content": user_message}],
-        stream=True,
-    )
-
-     #Collect the response from the stream
-    response_text = ""
-    for chunk in stream:
-        if chunk.choices[0].delta.content is not None:
-            response_text += chunk.choices[0].delta.content
-
-    return jsonify({'response': response_text})#user_message
+    try:
+        
+        # Extracting the JSON data from the request
+        data = request.json
+        user_message = data['message']
+        print(user_message)
+        
+        # Use the client to create a chat completion
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": user_message}]
+        )
+        
+        # Extract and return the response
+        response_text = response.choices[0].message['content']
+        return jsonify({'response': response_text})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/users')
 def getUsers():
