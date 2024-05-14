@@ -255,9 +255,10 @@ def profile():
     #this needs a bit of changing i think logic is a little wrong 
     #fixed temporarily to get the api to work
     #will soon add so that it gets the data and adds to database so i can display on profile
-@app.route("/Fnstats")
+@app.route("/Fnstats", methods=["GET"])
 #@jwt_required
 def fnstats():
+    #current_user = get_jwt_identity()
     #getting api key from .env file to make it more secure
     fn_api_key = os.getenv("FN_API_KEY")
     #getting fornite username
@@ -328,24 +329,41 @@ def testapex():
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
     try:
-        
         # Extracting the JSON data from the request
         data = request.json
         user_message = data['message']
+        fortnite_stats = data.get('fortniteStats')
         print(user_message)
-        
+        print("Fortnite stats:", fortnite_stats)
+
+        if fortnite_stats:
+            user_message += f"\nFortnite Stats: {fortnite_stats}"
+            
+        client = OpenAI()
         # Use the client to create a chat completion
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": user_message}]
+            messages=[{"role": "user", "content": user_message }]
         )
-        
+        # Print the whole response for debugging
+        print("Full Response:", response)
         # Extract and return the response
-        response_text = response.choices[0].message['content']
+        choices = response.choices
+        print("Choices:", choices)
+
+        first_choice = choices[0]
+        print("First Choice:", first_choice)
+
+        message_object = first_choice.message
+        print("Message Object:", message_object)
+
+        response_text = message_object.content
+        print("Response text:", response_text)
+        
         return jsonify({'response': response_text})
     except Exception as e:
         return jsonify({'error': str(e)})
-
+    
 @app.route('/users')
 def getUsers():
     conn = get_mysql_connection()

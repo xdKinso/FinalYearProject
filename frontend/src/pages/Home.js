@@ -3,8 +3,10 @@ import api from '../components/api'; // Import your custom Axios instance
 import "./App.css";
 //my front page
 const Home = () => {
+    
     const [currentTime, setCurrentTime] = useState(0);
     const [userName, setUserName] = useState('');
+    
 
     useEffect(() => {
         // Fetch current time
@@ -36,7 +38,20 @@ const Home = () => {
                 <p>Welcome to Krystian's Stat Tracker</p>
                 <p>The current time is {currentTime}.</p>
                 <h1>Welcome to the Home page!</h1>
-                <p>This is a simple React component for the Home page.</p>
+                <div class="tag-list">
+                    <div class="inner">
+                        <div class="tag"><span></span>
+                        Apex Legenbds</div>
+                        <div class="tag"><span></span>
+                        Overwatch</div>
+                        <div class="tag"><span></span>
+                        Fortnite</div>
+                        <div class="tag"><span></span>
+                        Valorant(soon)</div>
+                        <div class="tag"><span></span>
+                        more games to come</div>
+                    </div>
+                </div>
             </header>
         </div>
     );

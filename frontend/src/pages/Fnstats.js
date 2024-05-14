@@ -1,58 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Form, FormGroup, FormControl, Alert } from 'react-bootstrap';
 import api from '../components/api';
+import fetchProfileData from '../components/fetchProfileData';
+import handleSubmitStats from '../components/handleSubmitStats';
+import handleSendMessage from '../components/handleSendMessage';
 import './styles.css';
-//fn stats page
+
 function FortniteStats() {
-    //setting variables
+    const [userData, setUserData] = useState(null);
     const [username, setUsername] = useState('');
     const [stats, setStats] = useState(null);
     const [error, setError] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState('');
+    const [fortniteStats, setFortniteStats] = useState(null);
+    const navigate = useNavigate();
 
-    //what happens when a user subits stats
-    //i want to move all of my functions to seperate files and use them by importing later (because its a better practice)
-    const handleSubmitStats = async (e) => {
-        //preventing from sending default values
-        e.preventDefault();
-        //setting error to empty string
-        setError('');
-        //setting stats to null
-        setStats(null);
-        try {
-            //calling api.get
-            const response = await api.get(`/Fnstats?username=${username}`);
-            if (response.data) {
-                setStats(response.data);
-            }
-        } catch (err) {
-            setError('Failed to fetch Fortnite stats. Please ensure the username is correct.');
-        }
-    };
-    //handling messages from the chatbot
-    const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if (!currentMessage.trim()) return;
-
-        const userMessage = { sender: 'User', text: currentMessage };
-        setChatMessages([...chatMessages, userMessage]);
-
-        try {
-            const response = await api.post('/chatbot', { message: currentMessage });
-            const botMessage = { sender: 'Bot', text: response.data.response };
-            setChatMessages([...chatMessages, botMessage]);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-
-        setCurrentMessage('');
-    };
+    useEffect(() => {
+        fetchProfileData(setUserData, setError, navigate);
+    }, [navigate]);
 
     return (
         <div className="chat-container">
             <div className="stats-container">
-                <Form onSubmit={handleSubmitStats}>
+                <Form onSubmit={(e) => handleSubmitStats(e, username, setStats, setFortniteStats, setError)}>
                     <FormGroup className="mb-3">
                         <FormControl
                             type="text"
@@ -65,7 +37,6 @@ function FortniteStats() {
                 </Form>
                 {error && <Alert variant="danger">{error}</Alert>}
                 {stats && (
-                    //showing stats using pure fn api not good will change once i actually add them to my database
                     <div>
                         <h3>Stats for {username}</h3>
                         <p>Deaths: {stats.data.stats.all.overall.deaths}</p>
@@ -94,7 +65,7 @@ function FortniteStats() {
                         {msg.text}
                     </div>
                 ))}
-                <Form onSubmit={handleSendMessage}>
+                <Form onSubmit={(e) => handleSendMessage(e, currentMessage, fortniteStats, chatMessages, setChatMessages, setCurrentMessage)}>
                     <FormGroup className="mb-3">
                         <FormControl
                             type="text"
