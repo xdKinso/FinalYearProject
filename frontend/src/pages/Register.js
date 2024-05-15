@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import api from '../components/api'; // Import your Axios instance
-//setting variables
+//setting variables 
+//register page
 function BasicForm() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');

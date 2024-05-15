@@ -6,7 +6,7 @@ import fetchProfileData from '../components/fetchProfileData';
 import handleSubmitStats from '../components/handleSubmitStats';
 import handleSendMessage from '../components/handleSendMessage';
 import './styles.css';
-
+//fortnitestats page
 function FortniteStats() {
     const [userData, setUserData] = useState(null);
     const [username, setUsername] = useState('');
@@ -24,6 +24,11 @@ function FortniteStats() {
     return (
         <div className="chat-container">
             <div className="stats-container">
+            <ul>Steps to use</ul>
+            <li>1. Input your fortnite username</li>
+            <li>2. Click get stats</li>
+            <li>3. Ask the bot a question</li>
+            
                 <Form onSubmit={(e) => handleSubmitStats(e, username, setStats, setFortniteStats, setError)}>
                     <FormGroup className="mb-3">
                         <FormControl

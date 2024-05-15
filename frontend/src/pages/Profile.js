@@ -3,7 +3,7 @@ import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import api from '../components/api'; // Import your Axios instance
 import './styles.css'; 
-//profile page
+//profile page for react
 function Profile() {
     //setting variables
     const [userData, setUserData] = useState(null);

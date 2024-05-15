@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../components/api'; // Import your custom Axios instance
 import "./App.css";
-//my front page
+//my front page of the app
 const Home = () => {
     
     const [currentTime, setCurrentTime] = useState(0);

@@ -5,7 +5,6 @@
     z-index: 1000;   /* Ensure it's above other elements */
 }
 
-/* Add this to your CSS file */
 .chat-container {
     display: flex;
     justify-content: space-between;
